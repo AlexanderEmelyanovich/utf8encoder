@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     name: Build APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # <-- важно: не ubuntu-latest, а именно 22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,6 +42,7 @@ jobs:
           pip install buildozer cython==0.29.36
 
       - name: Build APK
+        # yes | автоматически отвечает y на все вопросы про лицензии
         run: yes | buildozer -v android debug
 
       - name: Upload APK
