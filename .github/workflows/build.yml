@@ -28,7 +28,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            git zip unzip \
+            git zip unzip wget curl \
             autoconf automake autopoint \
             libtool pkg-config \
             zlib1g-dev \
@@ -45,28 +45,13 @@ jobs:
       - name: Clean old build cache
         run: rm -rf .buildozer ~/.buildozer
 
-      - name: Accept SDK licenses and install build-tools
-        run: |
-          export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
-          # Принудительно принимаем лицензии
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          # Ставим build-tools нужной версии (совместимой с API 33)
-          sdkmanager "build-tools;33.0.2"
+      - name: Prepare Android SDK folder
+        run: mkdir -p "$HOME/.buildozer/android/platform/android-sdk/build-tools/33.0.2"
 
-      - name: Build APK
-        env:
-          ANDROID_NDK_HOME: ""
-          ANDROID_NDK_ROOT: ""
+      - name: Download and extract build-tools 33.0.2 (manual install)
         run: |
-          unset ANDROID_NDK_HOME
-          unset ANDROID_NDK_ROOT
-          unset ANDROID_NDK
-          unset ANDROID_NDK_LATEST_HOME
-          buildozer -v android debug < /dev/null
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: encoder-apk
-          path: bin/*.apk
-          retention-days: 30
+          export ANDROID_SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
+          cd "$ANDROID_SDK_ROOT/build-tools/33.0.2"
+          # Скачиваем build-tools для Linux
+          wget -q https://dl.google.com/android/repository/build-tools_r33.0.2-linux.zip
+          unzip
