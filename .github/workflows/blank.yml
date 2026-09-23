@@ -1,49 +1,30 @@
-name: Build Kivy APK
+name: Build Android APK
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
-
-permissions:
-  contents: read
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Build APK
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
         with:
-          python-version: "3.11"
+          workdir: .
+          buildozer_version: stable
+          command: buildozer android debug
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev
-          pip install buildozer cython
-
-      # Ключевой шаг: принимаем лицензии и ставим build-tools
-      - name: Prepare Android SDK
-        run: |
-          # Buildozer ещё не запускали, но sdkmanager уже будет в ~/.buildozer после первого запуска.
-          # Чтобы не зависеть от этого, можно сначала запустить buildozer init/download,
-          # но проще сделать так:
-
-          # Создаём минимальную структуру, чтобы sdkmanager был доступен
-          buildozer init || true
-
-          SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
-          CMDLINE_BIN="$SDK_ROOT/cmdline-tools/latest/bin"
-
-          # Принимаем лицензии
-          yes | "$CMDLINE_BIN/sdkmanager" --licenses
-
-          # Ставим нужные компоненты
-          "$CMDLINE_BIN/sdkmanager" "build-tools;30.0.3" "platform-tools" "platforms;android-31"
-
-      - name: Build APK
-        run: buildozer -v android debug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: encoder-apk
+          path: ${{ steps.buildozer.outputs.filename }}
