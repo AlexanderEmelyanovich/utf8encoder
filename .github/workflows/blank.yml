@@ -11,39 +11,39 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout project
-        uses: actions/checkout@v4
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git zip unzip openjdk-17-jdk \
-            python3-pip python3-venv \
-            autoconf automake libtool pkg-config \
-            zlib1g-dev libncurses5-dev \
-            cmake libffi-dev libssl-dev
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install Buildozer and Cython
+      - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install buildozer
-          python -m pip install "Cython==0.29.33"
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev
+          pip install buildozer cython
+
+      # Ключевой шаг: принимаем лицензии и ставим build-tools
+      - name: Prepare Android SDK
+        run: |
+          # Buildozer ещё не запускали, но sdkmanager уже будет в ~/.buildozer после первого запуска.
+          # Чтобы не зависеть от этого, можно сначала запустить buildozer init/download,
+          # но проще сделать так:
+
+          # Создаём минимальную структуру, чтобы sdkmanager был доступен
+          buildozer init || true
+
+          SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
+          CMDLINE_BIN="$SDK_ROOT/cmdline-tools/latest/bin"
+
+          # Принимаем лицензии
+          yes | "$CMDLINE_BIN/sdkmanager" --licenses
+
+          # Ставим нужные компоненты
+          "$CMDLINE_BIN/sdkmanager" "build-tools;30.0.3" "platform-tools" "platforms;android-31"
 
       - name: Build APK
         run: buildozer -v android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: utf8encoder-debug-apk
-          path: bin/*.apk
-          if-no-files-found: error
