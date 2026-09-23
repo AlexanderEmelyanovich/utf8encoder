@@ -7,11 +7,9 @@ on:
 
 jobs:
   build:
-    name: Build APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -24,45 +22,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            git zip unzip \
-            autoconf automake autopoint \
-            libtool pkg-config \
-            zlib1g-dev \
-            libncurses5-dev libncursesw5-dev \
-            libtinfo6 \
-            cmake libffi-dev libssl-dev \
-            gettext
+            git zip unzip python3-pip \
+            autoconf automake libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev \
+            libtinfo5 cmake libffi-dev libssl-dev
 
-      - name: Install Buildozer from git
+      - name: Install Buildozer
         run: |
           pip install --upgrade pip
-          pip install git+https://github.com/kivy/buildozer
-          pip install cython==0.29.34
+          pip install buildozer cython==0.29.36
 
-      - name: Clean old build cache
+      - name: Clean cache
         run: rm -rf .buildozer ~/.buildozer
 
-      - name: Verify system SDK paths (debug)
-        run: |
-          echo "=== SDK root ==="
-          ls -la /usr/local/lib/android/sdk/
-          echo "=== build-tools ==="
-          ls -la /usr/local/lib/android/sdk/build-tools/ || echo "No build-tools folder found"
-          echo "=== NDK ==="
-          ls -la /usr/local/lib/android/sdk/ndk/ || true
-          echo "=== Ant ==="
-          which ant
-
       - name: Build APK
-        run: buildozer -v android debug
+        run: yes | buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: encoder-apk
           path: bin/*.apk
-          retention-days: 30
