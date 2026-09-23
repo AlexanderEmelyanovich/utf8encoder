@@ -9,7 +9,8 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -39,16 +40,36 @@ jobs:
       - name: Clean cache
         run: rm -rf .buildozer ~/.buildozer
 
-      # Этап 1: buildozer скачает SDK, но упадёт на aidl — это нормально
-      - name: Step 1 — Download SDK
-        run: buildozer android update || true
-
-      # Этап 2: ставим build-tools системным sdkmanager в папку buildozer
-      - name: Step 2 — Install build-tools
+      # ГЛАВНЫЙ ТРЮК: готовим SDK для Buildozer вручную
+      - name: Prepare Buildozer SDK folder
         run: |
-          BUILDOSER_SDK="$HOME/.buildozer/android/platform/android-sdk"
-          SYSTEM_SDKMANAGER="/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager"
-          
-          echo "Installing build-tools into $BUILDOSER_SDK ..."
-          echo "y" | "$SYSTEM_SDKMANAGER" --sdk_root="$BUILDOSER_SDK" "build-tools;33.0.0"
-          echo "y"
+          SDK_DEST="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$SDK_DEST"
+
+          # Копируем системные компоненты (они уже есть на раннере)
+          cp -r /usr/local/lib/android/sdk/platforms "$SDK_DEST/"
+          cp -r /usr/local/lib/android/sdk/build-tools "$SDK_DEST/"
+          cp -r /usr/local/lib/android/sdk/tools "$SDK_DEST/"  # нужен для ant/etc
+          cp -r /usr/local/lib/android/sdk/cmdline-tools "$SDK_DEST/"
+
+          echo "=== SDK contents ==="
+          ls -la "$SDK_DEST"
+          ls -la "$SDK_DEST/build-tools/"
+
+          # Проверка: должен быть aidl
+          if [ ! -f "$SDK_DEST/build-tools/*/bin/aidl" ]; then
+            echo "ERROR: aidl not found!"
+            exit 1
+          else
+            echo "aidl found!"
+          fi
+
+      - name: Build APK
+        run: buildozer -v android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: encoder-apk
+          path: bin/*.apk
+          retention-days: 30
