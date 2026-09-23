@@ -48,10 +48,10 @@ jobs:
 
       - name: Verify system SDK paths (debug)
         run: |
-          echo "=== SDK ==="
+          echo "=== SDK root ==="
           ls -la /usr/local/lib/android/sdk/
           echo "=== build-tools ==="
-          ls -la /usr/local/lib/android/sdk/build-tools/ || true
+          ls -la /usr/local/lib/android/sdk/build-tools/ || echo "No build-tools folder found"
           echo "=== NDK ==="
           ls -la /usr/local/lib/android/sdk/ndk/ || true
           echo "=== Ant ==="
