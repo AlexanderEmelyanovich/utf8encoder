@@ -42,16 +42,39 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython==0.29.34
 
+      # КРИТИЧНО: Полная очистка кэша Buildozer. 
+      # Без этого он будет использовать старый битый SDK.
       - name: Clean old build cache
         run: rm -rf .buildozer ~/.buildozer
 
-      - name: Prepare Android SDK folder
-        run: mkdir -p "$HOME/.buildozer/android/platform/android-sdk/build-tools/33.0.2"
-
-      - name: Download and extract build-tools 33.0.2 (manual install)
+      - name: Setup Android SDK Paths
+        id: sdk-paths
         run: |
-          export ANDROID_SDK_ROOT="$HOME/.buildozer/android/platform/android-sdk"
-          cd "$ANDROID_SDK_ROOT/build-tools/33.0.2"
-          # Скачиваем build-tools для Linux
-          wget -q https://dl.google.com/android/repository/build-tools_r33.0.2-linux.zip
-          unzip
+          echo "ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=" >> $GITHUB_ENV
+
+      - name: Accept Licenses and Install Build Tools (Manual SDK Management)
+        run: |
+          # Создаем папку, если нет
+          mkdir -p "$ANDROID_HOME"
+          
+          # Принудительно принимаем лицензии (используем echo y, это стабильнее yes| в CI)
+          echo "y" | sdkmanager --licenses > /dev/null 2>&1 || true
+          
+          # Скачиваем build-tools явно. Это гарантирует, что папка build-tools появится.
+          sdkmanager "build-tools;33.0.2"
+
+      - name: Build APK
+        run: |
+          unset ANDROID_NDK
+          unset ANDROID_NDK_LATEST_HOME
+          # Запускаем buildozer. Он увидит build-tools и продолжит сборку.
+          buildozer -v android debug < /dev/null
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: encoder-apk
+          path: bin/*.apk
+          retention-days: 30
