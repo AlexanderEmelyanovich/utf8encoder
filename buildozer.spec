@@ -1,4 +1,3 @@
-%%writefile /content/buildozer.spec
 [app]
 title = UTF8 Encoder
 package.name = utf8encoder
