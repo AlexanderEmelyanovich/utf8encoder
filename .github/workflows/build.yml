@@ -39,32 +39,16 @@ jobs:
       - name: Clean cache
         run: rm -rf .buildozer ~/.buildozer
 
-      # ЭТАП 1: buildozer скачает SDK и sdkmanager, но упадёт на aidl
-      - name: Step 1 — Download SDK (will fail on aidl, that's OK)
+      # Этап 1: buildozer скачает SDK, но упадёт на aidl — это нормально
+      - name: Step 1 — Download SDK
         run: buildozer android update || true
 
-      # ЭТАП 2: вручную ставим build-tools через скачанный sdkmanager
-      - name: Step 2 — Install build-tools manually
+      # Этап 2: ставим build-tools системным sdkmanager в папку buildozer
+      - name: Step 2 — Install build-tools
         run: |
-          SDKMANAGER="$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager"
-          if [ -f "$SDKMANAGER" ]; then
-            echo "Found sdkmanager, installing build-tools..."
-            echo "y" | "$SDKMANAGER" "build-tools;33.0.0"
-            echo "y" | "$SDKMANAGER" "platforms;android-33"
-          else
-            echo "sdkmanager not found at $SDKMANAGER"
-            echo "Contents of SDK dir:"
-            ls -la "$HOME/.buildozer/android/platform/android-sdk/" || true
-            ls -la "$HOME/.buildozer/android/platform/android-sdk/tools/bin/" || true
-            exit 1
-          fi
-
-      # ЭТАП 3: сборка APK — build-tools уже на месте
-      - name: Step 3 — Build APK
-        run: buildozer -v android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: encoder-apk
-          path: bin/*.apk
+          BUILDOSER_SDK="$HOME/.buildozer/android/platform/android-sdk"
+          SYSTEM_SDKMANAGER="/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager"
+          
+          echo "Installing build-tools into $BUILDOSER_SDK ..."
+          echo "y" | "$SYSTEM_SDKMANAGER" --sdk_root="$BUILDOSER_SDK" "build-tools;33.0.0"
+          echo "y"
