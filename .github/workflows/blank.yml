@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     name: Build APK
-    runs-on: ubuntu-22.04  # <-- важно: не ubuntu-latest, а именно 22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,18 +31,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             git zip unzip \
-            autoconf automake libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev \
-            libtinfo5 cmake libffi-dev libssl-dev \
+            python3-pip python3-virtualenv \
+            autoconf automake autopoint \
+            libtool pkg-config \
+            zlib1g-dev \
+            libncurses5-dev libncursesw5-dev \
+            libtinfo6 \
+            cmake libffi-dev libssl-dev \
             gettext
 
       - name: Install Buildozer
         run: |
           pip install --upgrade pip
-          pip install buildozer cython==0.29.36
+          pip install buildozer cython==0.29.34
 
       - name: Build APK
-        # yes | автоматически отвечает y на все вопросы про лицензии
         run: yes | buildozer -v android debug
 
       - name: Upload APK
