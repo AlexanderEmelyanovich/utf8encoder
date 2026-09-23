@@ -45,7 +45,18 @@ jobs:
       - name: Clean old build cache
         run: rm -rf .buildozer ~/.buildozer
 
+      - name: Accept SDK licenses and install build-tools
+        run: |
+          export ANDROID_HOME="$HOME/.buildozer/android/platform/android-sdk"
+          # Принудительно принимаем лицензии
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          # Ставим build-tools нужной версии (совместимой с API 33)
+          sdkmanager "build-tools;33.0.2"
+
       - name: Build APK
+        env:
+          ANDROID_NDK_HOME: ""
+          ANDROID_NDK_ROOT: ""
         run: |
           unset ANDROID_NDK_HOME
           unset ANDROID_NDK_ROOT
