@@ -1,5 +1,4 @@
 [app]
-[app]
 title = EncoderApp
 package.name = encoderapp
 package.domain = org.test
