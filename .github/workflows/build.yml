@@ -40,28 +40,32 @@ jobs:
       - name: Clean cache
         run: rm -rf .buildozer ~/.buildozer
 
-      # ГЛАВНЫЙ ТРЮК: готовим SDK для Buildozer вручную
-      - name: Prepare Buildozer SDK folder
+      # ГЛАВНОЕ: готовим SDK так, чтобы Buildozer НЕ запускал sdkmanager
+      - name: Prepare SDK for Buildozer (no sdkmanager)
         run: |
           SDK_DEST="$HOME/.buildozer/android/platform/android-sdk"
           mkdir -p "$SDK_DEST"
 
-          # Копируем системные компоненты (они уже есть на раннере)
-          cp -r /usr/local/lib/android/sdk/platforms "$SDK_DEST/"
+          # Копируем build-tools и platforms — этого достаточно для aidl
           cp -r /usr/local/lib/android/sdk/build-tools "$SDK_DEST/"
-          cp -r /usr/local/lib/android/sdk/tools "$SDK_DEST/"  # нужен для ant/etc
-          cp -r /usr/local/lib/android/sdk/cmdline-tools "$SDK_DEST/"
+          cp -r /usr/local/lib/android/sdk/platforms "$SDK_DEST/"
+
+          # Создаём минимальную папку tools, чтобы Buildozer не искал sdkmanager
+          mkdir -p "$SDK_DEST/tools/bin"
+          touch "$SDK_DEST/tools/bin/sdkmanager"
+          chmod +x "$SDK_DEST/tools/bin/sdkmanager"
 
           echo "=== SDK contents ==="
           ls -la "$SDK_DEST"
           ls -la "$SDK_DEST/build-tools/"
 
-          # Проверка: должен быть aidl
-          if [ ! -f "$SDK_DEST/build-tools/*/bin/aidl" ]; then
-            echo "ERROR: aidl not found!"
+          # Проверка: должен быть aidl в любой версии build-tools
+          AIDL_PATH=$(find "$SDK_DEST/build-tools/" -name "aidl" -type f | head -n1)
+          if [ -z "$AIDL_PATH" ]; then
+            echo "ERROR: aidl not found in build-tools!"
             exit 1
           else
-            echo "aidl found!"
+            echo "aidl found at: $AIDL_PATH"
           fi
 
       - name: Build APK
@@ -73,3 +77,4 @@ jobs:
           name: encoder-apk
           path: bin/*.apk
           retention-days: 30
+
