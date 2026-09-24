@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04   # Важно: не latest, а 22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,41 +42,42 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython==0.29.33
 
-      - name: Overwrite buildozer.spec
+      - name: Write buildozer.spec
         run: |
-          cat > buildozer.spec << 'SPECEOF'
-          [app]
-          title = EncoderApp
-          package.name = encoderapp
-          package.domain = org.test
-          source.dir = .
-          source.include_exts = py,png,jpg,kv,atlas,ttf
-          version = 0.1
-          requirements = python3,kivy
-          orientation = portrait
-          fullscreen = 0
+          cat > buildozer.spec << 'EOF'
+[app]
+title = EncoderApp
+package.name = encoderapp
+package.domain = org.test
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,ttf
+version = 0.1
+requirements = python3,kivy
+orientation = portrait
+fullscreen = 0
 
-          [android]
-          android.api = 33
-          android.minapi = 21
-          android.ndk = 25b
-          android.arch = arm64-v8a
-          android.accept_sdk_license = True
+[android]
+android.api = 33
+android.minapi = 21
+android.ndk = 25b
+android.arch = arm64-v8a
+android.accept_sdk_license = True
 
-          [buildozer]
-          log_level = 2
-          SPECEOF
-          echo "=== buildozer.spec contents ==="
+[buildozer]
+log_level = 2
+EOF
           cat buildozer.spec
 
-      - name: Clean cache
+      - name: Clean cache (critical)
         run: rm -rf .buildozer ~/.buildozer
 
       - name: Build with Buildozer
         run: yes | buildozer -v android debug
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: encoder-apk
           path: bin/*.apk
+
