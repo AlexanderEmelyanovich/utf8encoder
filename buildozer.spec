@@ -5,6 +5,7 @@ package.domain = org.test
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf
 version = 0.1
+# Важно: только python3 и kivy, без слова "android"
 requirements = python3,kivy
 orientation = portrait
 fullscreen = 0
