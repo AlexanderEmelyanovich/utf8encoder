@@ -14,8 +14,8 @@ android.api = 33
 android.minapi = 21
 android.ndk = 25b
 android.arch = arm64-v8a
-android.accept_sdk_license = True
-android.skip_update = 1
+# Важно: НЕ указываем sdk_path, не просим ничего обновлять
 
 [buildozer]
 log_level = 2
+
