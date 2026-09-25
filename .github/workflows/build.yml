@@ -42,9 +42,17 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython==0.29.33
 
+      - name: Clone p4a at stable release
+        run: |
+          git clone --branch v2024.01.21 --single-branch \
+            https://github.com/kivy/python-for-android.git /tmp/p4a
+          pip install -e /tmp/p4a
+          echo "=== p4a version ==="
+          python -c "import pythonforandroid; print(pythonforandroid.__file__)"
+
       - name: Write buildozer.spec
         run: |
-          printf '[app]\ntitle = EncoderApp\npackage.name = encoderapp\npackage.domain = org.test\nsource.dir = .\nsource.include_exts = py,png,jpg,kv,atlas,ttf\nversion = 0.1\nrequirements = python3,kivy\norientation = portrait\nfullscreen = 0\n\n[android]\nandroid.api = 33\nandroid.minapi = 21\nandroid.ndk = 25b\nandroid.arch = arm64-v8a\nandroid.accept_sdk_license = True\n\n[buildozer]\nlog_level = 2\np4a.branch = v2024.01.21\n' > buildozer.spec
+          printf '[app]\ntitle = EncoderApp\npackage.name = encoderapp\npackage.domain = org.test\nsource.dir = .\nsource.include_exts = py,png,jpg,kv,atlas,ttf\nversion = 0.1\nrequirements = python3,kivy\norientation = portrait\nfullscreen = 0\n\n[android]\nandroid.api = 33\nandroid.minapi = 21\nandroid.ndk = 25b\nandroid.arch = arm64-v8a\nandroid.accept_sdk_license = True\n\n[buildozer]\nlog_level = 2\np4a.source_dir = /tmp/p4a\n' > buildozer.spec
           cat buildozer.spec
 
       - name: Clean cache
@@ -58,4 +66,3 @@ jobs:
         with:
           name: encoder-apk
           path: bin/*.apk
-
