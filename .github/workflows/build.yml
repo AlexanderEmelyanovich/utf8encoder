@@ -44,22 +44,11 @@ jobs:
 
       - name: Write buildozer.spec
         run: |
-          printf '[app]\ntitle = EncoderApp\npackage.name = encoderapp\npackage.domain = org.test\nsource.dir = .\nsource.include_exts = py,png,jpg,kv,atlas,ttf\nversion = 0.1\nrequirements = python3,kivy\norientation = portrait\nfullscreen = 0\n\n[android]\nandroid.api = 33\nandroid.minapi = 21\nandroid.ndk = 25b\nandroid.arch = arm64-v8a\nandroid.accept_sdk_license = True\n\n[buildozer]\nlog_level = 2\np4a.branch = v2024.01.21\np4a.update = False\n' > buildozer.spec
+          printf '[app]\ntitle = EncoderApp\npackage.name = encoderapp\npackage.domain = org.test\nsource.dir = .\nsource.include_exts = py,png,jpg,kv,atlas,ttf\nversion = 0.1\nrequirements = python3,kivy\norientation = portrait\nfullscreen = 0\np4a.branch = v2024.01.21\n\n[android]\nandroid.api = 33\nandroid.minapi = 21\nandroid.ndk = 25b\nandroid.arch = arm64-v8a\nandroid.accept_sdk_license = True\n\n[buildozer]\nlog_level = 2\n' > buildozer.spec
           cat buildozer.spec
 
       - name: Clean cache
         run: rm -rf .buildozer ~/.buildozer
-
-      - name: Pre-clone p4a stable release
-        run: |
-          mkdir -p .buildozer/android/platform
-          git clone --branch v2024.01.21 --single-branch \
-            https://github.com/kivy/python-for-android.git \
-            .buildozer/android/platform/python-for-android
-          echo "=== p4a version ==="
-          cd .buildozer/android/platform/python-for-android
-          git describe --tags
-          git log --oneline -1
 
       - name: Build with Buildozer
         run: yes | buildozer -v android debug
